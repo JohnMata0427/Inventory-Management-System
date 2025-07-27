@@ -6,8 +6,11 @@ import {
   Validators,
   ReactiveFormsModule,
   AbstractControl,
+  ValidatorFn,
+  ValidationErrors,
+  FormControl,
 } from '@angular/forms';
-import { AuthService } from '../../../services/auth.service';
+import { AuthService } from '../services/auth.service';
 @Component({
   imports: [RouterLink, ReactiveFormsModule],
   standalone: true,
@@ -26,11 +29,17 @@ import { AuthService } from '../../../services/auth.service';
         class="w-1/2 h-full bg-[#1E1D24] flex flex-col justify-center items-center p-8 md:p-16"
       >
         <div class="w-full max-w-md">
-          <h1 class="text-4xl font-bold mb-8 text-center">Crear una cuenta</h1>
-          
-          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-5">
+          <h1 class="text-4xl font-bold mb-8 text-center">Crear una cuentas</h1>
+
+          <form
+            [formGroup]="formRegistro"
+            (ngSubmit)="onSubmit()"
+            class="space-y-5"
+          >
             <div>
-              <label class="block mb-1 text-sm">Nombre completo</label>
+              <label class="block mb-1 text-sm">Nombre</label>
+              @let nombreInvalido = (formRegistro.get('nombre')?.invalid &&
+              formRegistro.get('nombre')?.value) || errores().nombre;
               <div class="relative">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -47,35 +56,27 @@ import { AuthService } from '../../../services/auth.service';
                 <input
                   type="text"
                   formControlName="nombre"
-                  placeholder="Tu nombre"
+                  placeholder="Nombre"
                   class="w-full pl-12 pr-4 py-3 bg-[#2A2933] rounded-lg border border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 placeholder-gray-400 text-white"
-                  [class.border-red-500]="
-                    registerForm.get('nombre')?.invalid &&
-                    registerForm.get('nombre')?.touched
+                  [class]="
+                    nombreInvalido
+                      ? 'border-red-600 text-red-600 outline-red-600'
+                      : 'outline-gris-300 border-[#878787]'
                   "
                 />
-              </div>
-              <!-- Mensaje de error para nombre -->
-              @if (registerForm.get('nombre')?.invalid &&
-              registerForm.get('nombre')?.touched) {
-              <div class="text-red-400 text-xs mt-1">
-                @if (registerForm.get('nombre')?.errors?.['required']) {
-                <span>El nombre es requerido</span>
-                }
-                @if (registerForm.get('nombre')?.errors?.['minlength']) {
-                <span>El nombre debe tener entre 3 y 20 caracteres</span>
-                }
-                @if (registerForm.get('nombre')?.errors?.['maxlength']) {
-                <span>El nombre debe tener entre 3 y 20 caracteres</span>
-                }
-                @if (registerForm.get('nombre')?.errors?.['pattern']) {
-                <span>El nombre solo puede contener caracteres alfabéticos y espacios</span>
+                @if (errores().nombre) {
+                <small class="text-red-600">Este campo es obligatorio.</small>
+                } @else if (nombreInvalido) {
+                <small class="text-red-600">
+                  El nombre no es válido (Ej. John)
+                </small>
                 }
               </div>
-              }
             </div>
             <div>
               <label class="block mb-1 text-sm">Correo electrónico</label>
+              @let emailInvalido = (formRegistro.get('email')?.invalid &&
+              formRegistro.get('email')?.value) || errores().email;
               <div class="relative">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -94,26 +95,25 @@ import { AuthService } from '../../../services/auth.service';
                   formControlName="email"
                   placeholder="ejemplo@correo.com"
                   class="w-full pl-12 pr-4 py-3 bg-[#2A2933] rounded-lg border border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 placeholder-gray-400 text-white"
-                  [class.border-red-500]="
-                    registerForm.get('email')?.invalid &&
-                    registerForm.get('email')?.touched
+                  [class]="
+                    emailInvalido
+                      ? 'border-red-600 text-red-600 outline-red-600'
+                      : 'outline-gris-300 border-[#878787]'
                   "
                 />
-              </div>
-              <!-- Mensaje de error para email -->
-              @if (registerForm.get('email')?.invalid &&
-              registerForm.get('email')?.touched) {
-              <div class="text-red-400 text-xs mt-1">
-                @if (registerForm.get('email')?.errors?.['required']) {
-                <span>El email es requerido</span>
-                } @if (registerForm.get('email')?.errors?.['email']) {
-                <span>Ingresa un email válido</span>
+                @if (errores().email) {
+                <small class="text-red-600">Este campo es obligatorio.</small>
+                } @else if (emailInvalido) {
+                <small class="text-red-600">
+                  El correo electrónico no es válido (Ej.ejemplo&#64;gmail.com)
+                </small>
                 }
               </div>
-              }
             </div>
             <div>
               <label class="block mb-1 text-sm">Contraseña</label>
+              @let passwordInvalido = (formRegistro.get('password')?.invalid &&
+              formRegistro.get('password')?.value) || errores().password;
               <div class="relative">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -134,33 +134,28 @@ import { AuthService } from '../../../services/auth.service';
                   formControlName="password"
                   placeholder="********"
                   class="w-full pl-12 pr-4 py-3 bg-[#2A2933] rounded-lg border border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 placeholder-gray-400 text-white"
-                  [class.border-red-500]="
-                    registerForm.get('password')?.invalid &&
-                    registerForm.get('password')?.touched
+                  [class]="
+                    passwordInvalido
+                      ? 'border-red-600 text-red-600 outline-red-600'
+                      : 'outline-gris-300 border-[#878787]'
                   "
                 />
               </div>
-              <!-- Mensaje de error para password -->
-              @if (registerForm.get('password')?.invalid &&
-              registerForm.get('password')?.touched) {
-              <div class="text-red-400 text-xs mt-1">
-                @if (registerForm.get('password')?.errors?.['required']) {
-                <span>La contraseña es requerida</span>
-                }
-                @if (registerForm.get('password')?.errors?.['minlength']) {
-                <span>La contraseña debe tener al menos 6 caracteres</span>
-                }
-                @if (registerForm.get('password')?.errors?.['noNumber']) {
-                <span>La contraseña debe contener al menos un número</span>
-                }
-                @if (registerForm.get('password')?.errors?.['noLetter']) {
-                <span>La contraseña debe contener al menos una letra</span>
-                }
-              </div>
+              @if (errores().password) {
+              <small class="text-red-600">Este campo es obligatorio.</small>
+              } @else if (passwordInvalido) {
+              <small class="text-red-600">
+                Debe contener al menos una mayúscula, una minúscula, un número y
+                un carácter especial (&#64;$!%*?&).
+              </small>
               }
             </div>
             <div>
               <label class="block mb-1 text-sm">Confirmar contraseña</label>
+              @let confirmarPasswordInvalido =
+              (formRegistro.get('confirmarPassword')?.invalid &&
+              formRegistro.get('confirmarPassword')?.value) ||
+              errores().confirmarPassword;
               <div class="relative">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -181,25 +176,15 @@ import { AuthService } from '../../../services/auth.service';
                   formControlName="confirmPassword"
                   placeholder="********"
                   class="w-full pl-12 pr-4 py-3 bg-[#2A2933] rounded-lg border border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 placeholder-gray-400 text-white"
-                  [class.border-red-500]="
-                    registerForm.get('confirmPassword')?.invalid &&
-                    registerForm.get('confirmPassword')?.touched
+                  [class]="
+                    confirmarPasswordInvalido
+                      ? 'border-red-600 text-red-600 outline-red-600'
+                      : 'outline-gris-300 border-[#878787]'
                   "
                 />
               </div>
-              <!-- Mensaje de error para confirmPassword -->
-              @if (registerForm.get('confirmPassword')?.invalid &&
-              registerForm.get('confirmPassword')?.touched) {
-              <div class="text-red-400 text-xs mt-1">
-                @if (registerForm.get('confirmPassword')?.errors?.['required']) {
-                <span>Confirma tu contraseña</span>
-                } @if (registerForm.errors?.['passwordMismatch']) {
-                <span>Las contraseñas no coinciden</span>
-                }
-              </div>
-              }
             </div>
-            
+
             <!-- Mostrar mensajes de error -->
             @if (errorMessage()) {
             <div class="text-red-600 text-sm">
@@ -208,10 +193,10 @@ import { AuthService } from '../../../services/auth.service';
             }
             <button
               type="submit"
-              [disabled]="registerForm.invalid || isLoading()"
+              [disabled]="formRegistro.invalid || carga()"
               class="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors py-3 rounded-lg font-semibold"
             >
-              {{ isLoading() ? 'Registrando...' : 'Registrarse' }}
+              {{ carga() ? 'Registrando...' : 'Registrarse' }}
             </button>
           </form>
 
@@ -225,147 +210,163 @@ import { AuthService } from '../../../services/auth.service';
           </div>
         </div>
       </div>
-      
+
       <!-- Modal de éxito -->
-      @if (showSuccessModal()) {
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-[#1E1D24] rounded-lg p-8 max-w-md w-full mx-4 border border-gray-600">
-            <div class="text-center">
-              <!-- Icono de éxito -->
-              <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              </div>
-              
-              <h3 class="text-lg leading-6 font-medium text-white mb-2">
-                ¡Registro exitoso!
-              </h3>
-              <p class="text-sm text-gray-300 mb-6">
-                Tu cuenta ha sido creada correctamente. Ahora puedes iniciar sesión.
-              </p>
-              
-              <button 
-                (click)="closeModal()"
-                class="w-full bg-violet-600 hover:bg-violet-700 transition-colors py-2 px-4 rounded-lg font-semibold text-white"
+      @if (mostrarModal()) {
+      <div
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      >
+        <div
+          class="bg-[#1E1D24] rounded-lg p-8 max-w-md w-full mx-4 border border-gray-600"
+        >
+          <div class="text-center">
+            <!-- Icono de éxito -->
+            <div
+              class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4"
+            >
+              <svg
+                class="h-6 w-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                OK
-              </button>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
             </div>
+
+            <h3 class="text-lg leading-6 font-medium text-white mb-2">
+              ¡Registro exitoso!
+            </h3>
+            <p class="text-sm text-gray-300 mb-6">
+              {{ mensajeExito() }}
+            </p>
+
+            <button
+              (click)="closeModal()"
+              class="w-full bg-violet-600 hover:bg-violet-700 transition-colors py-2 px-4 rounded-lg font-semibold text-white"
+            >
+              OK
+            </button>
           </div>
         </div>
+      </div>
       }
     </body>
   `,
 })
-export class RegisterPage implements OnInit {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
+export class RegisterPage {
   private router = inject(Router);
+  public serviceAuth = inject(AuthService);
 
-  // Estado del componente usando signals
-  isLoading = signal<boolean>(false);
-  errorMessage = signal<string>('');
-  showSuccessModal = signal<boolean>(false);
+  public passwordVisible = signal<boolean>(false);
+  public carga = signal<boolean>(false);
+  public errorMessage = signal<string>('');
+  public mostrarModal = signal<boolean>(false);
+  public mensajeExito = signal('');
 
-  // Formulario reactivo con validaciones que coinciden con el backend
-  registerForm: FormGroup = this.fb.group({
-    nombre: ['', [
-      Validators.required,
-      Validators.minLength(3),
-      Validators.maxLength(20),
-      Validators.pattern(/^[A-Za-z\s]+$/) // Solo letras y espacios
-    ]],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [
-      Validators.required,
-      Validators.minLength(6),
-      this.passwordComplexityValidator // Validador personalizado para número y letra
-    ]],
-    confirmPassword: ['', [Validators.required]]
-  }, {
-    validators: this.passwordMatchValidator
+  //variables para los mensajes de error
+  public errores = signal<any>({
+    nombre: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
   });
 
-  ngOnInit() {  
-    // Escuchar cambios en el formulario para limpiar mensajes de error
-    this.registerForm.valueChanges.subscribe(() => {
-      if (this.errorMessage()) {
-        console.log('🧹 Limpiando mensaje de error');
-        this.errorMessage.set('');
-      }
-    });
-  }
+  //Validacion personalizado para compara contrasenas
+  validacionPassword: ValidatorFn = (
+    control: AbstractControl
+  ): ValidationErrors | null => {
+    const formGroup = control as FormGroup;
+    const password = formGroup.get('password')?.value;
+    const confirmPassword = formGroup.get('confirmPassword')?.value;
 
-  // Validador personalizado para confirmar contraseñas
-  passwordMatchValidator(control: AbstractControl): { [key: string]: any } | null {
-    const password = control.get('password');
-    const confirmPassword = control.get('confirmPassword');
-    
-    if (password && confirmPassword && password.value !== confirmPassword.value) {
-      return { passwordMismatch: true };
-    }
-    return null;
-  }
-
-  // Validador personalizado para complejidad de contraseña (igual que backend)
-  passwordComplexityValidator(control: AbstractControl): { [key: string]: any } | null {
-    const value = control.value;
-    if (!value) {
+    // No mostrar error si alguno de los campos está vacío
+    if (!password || !confirmPassword) {
       return null;
     }
 
-    // Verificar si tiene al menos un número
-    const hasNumber = /\d/.test(value);
-    // Verificar si tiene al menos una letra
-    const hasLetter = /[A-Za-z]/.test(value);
+    return password === confirmPassword ? null : { passwordMismatch: true };
+  };
+  // Validador personalizado para la fortaleza de la contraseña
+  passwordMatchValidator: ValidatorFn = (
+    control: AbstractControl
+  ): ValidationErrors | null => {
+    const formGroup = control as FormGroup;
+    const password = formGroup.get('password')?.value;
+    const confirmPassword = formGroup.get('confirmarPassword')?.value;
 
-    if (!hasNumber) {
-      return { noNumber: true };
-    }
-    if (!hasLetter) {
-      return { noLetter: true };
+    // No mostrar error si alguno de los campos está vacío
+    if (!password || !confirmPassword) {
+      return null;
     }
 
-    return null;
+    return password === confirmPassword ? null : { mismatch: true };
+  };
+
+  public formRegistro = new FormGroup(
+    {
+      nombre: new FormControl('', [
+        Validators.required,
+        Validators.minLength(3),
+        Validators.maxLength(20),
+        Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/),
+      ]),
+      email: new FormControl('', [Validators.required, Validators.email]),
+      password: new FormControl('', [
+        Validators.required,
+        Validators.minLength(6),
+      ]),
+      confirmPassword: new FormControl('', [Validators.required]),
+    },
+    { validators: this.passwordMatchValidator }
+  );
+
+  borrarError(campo: string) {
+    this.errores.update((prev) => ({
+      ...prev,
+      [campo]: '',
+    }));
   }
 
-  // Método para manejar el envío del formulario
   onSubmit() {
-    Object.keys(this.registerForm.controls).forEach(key => {
-      const control = this.registerForm.get(key);
-      if (control?.errors) {
-        console.log(`Errores en ${key}:`, control.errors);
-      }
-    });
-
-    if (this.registerForm.valid) {
-      this.isLoading.set(true);
+    console.log('Formulario enviado:', this.formRegistro.value);
+    if (this.formRegistro.valid) {
+      this.carga.set(true);
       this.errorMessage.set('');
 
-      const { nombre, email, password } = this.registerForm.value;
-      console.log('Datos a enviar:', { nombre, email, password: '***' });
-
-      this.authService.register(nombre, email, password).subscribe({
-        next: (response) => {
-          console.log('✅ Registro exitoso:', response);
-          this.isLoading.set(false);
-          this.showSuccessModal.set(true);
-        },
-        error: (error) => {
-          this.isLoading.set(false);
-          console.error('❌ Error en registro:', error);
-        }
-      });
+      this.serviceAuth
+        .register(
+          this.formRegistro.value.nombre!,
+          this.formRegistro.value.email!,
+          this.formRegistro.value.password!
+        )
+        .subscribe({
+          next: (response: any) => {
+            this.carga.set(false);
+            this.mensajeExito.set(response.message);
+            this.mostrarModal.set(true);
+            this.formRegistro.reset();
+            console.log('✅ Registro exitoso:', response);
+          },
+          error: (error: any) => {
+            this.carga.set(false);
+            console.error('❌ Error en el registro 2:', error);
+          },
+        });
     } else {
-      console.log('❌ Formulario inválido, marcando campos como tocados');
-      this.registerForm.markAllAsTouched();
+      this.errorMessage.set(
+        'Por favor, completa todos los campos correctamente'
+      );
     }
   }
 
-  // Método para cerrar el modal y redirigir al login
   closeModal() {
-    this.showSuccessModal.set(false);
+    this.mostrarModal.set(false);
     this.router.navigate(['/iniciar-sesion']);
   }
 }

@@ -18,7 +18,7 @@ const router = Router();
 router
   .route('/')
   .post(validarUsuario, upload.single('imagen'), crearProductoValidator, crearProducto)
-  .get(obtenerProductos);
+  .get(validarUsuario, obtenerProductos);
 
 router
   .route('/:id')

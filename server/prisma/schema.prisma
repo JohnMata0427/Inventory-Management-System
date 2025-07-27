@@ -28,7 +28,7 @@ model Producto {
 }
 
 enum Categoria {
-  Laptos
+  Laptops
   CPU
   Mouses
   Teclados

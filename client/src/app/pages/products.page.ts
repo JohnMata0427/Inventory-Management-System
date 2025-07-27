@@ -1,8 +1,13 @@
-import { Component, signal } from '@angular/core';
-import { FormularioComponent } from '../components/formulario.component';
+import { Component, inject, signal } from '@angular/core';
+import {
+  Actions,
+  FormularioComponent,
+} from '../components/formulario.component';
+import { ProductsService } from '../services/products.service';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
-  imports: [FormularioComponent],
+  imports: [FormularioComponent, RouterLink],
   template: `
     <header
       class="w-full flex justify-between items-center  bg-[#23232a] px-6 py-4 "
@@ -56,38 +61,29 @@ import { FormularioComponent } from '../components/formulario.component';
 
       <!-- Lista de productos -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        <!-- Tarjeta Producto -->
+        @for(producto of serviceProductos.productos(); track $index) {
+
         <div
+        [routerLink]="['/detalle-producto']"
           class=" bg-[#2a2933] rounded-xl p-4 hover:ring-2 hover:ring-violet-500 transition relative"
         >
-          <img src="laptops.jpg" alt="Producto" class="rounded-lg mb-4" />
-          <div class="text-gray-300 text-sm mb-1">Categoría: Laptops</div>
-          <h2 class="text-2xl font-bold">Laptop Gamer X1</h2>
-          <p class="text-sm text-gray-400">Código: 10023</p>
-          <p class="text-sm text-gray-400 mb-4">Unidad: 30</p>
-          
+          <img [src]="producto.imagen" alt="Producto" class="rounded-lg mb-4 h-60 w-full object-cover" />
+          <div class="text-gray-300 text-sm mb-1">
+            Categoría: {{ producto.categoria }}
+          </div>
+          <h2 class="text-2xl font-bold">{{ producto.nombre }}</h2>
+          <p class="text-sm text-gray-400">Código: {{ producto.codigo }}</p>
+          <p class="text-sm text-gray-400 mb-4">
+            Unidad: {{ producto.unidad }}
+          </p>
+
           <!-- Botones en la esquina inferior derecha -->
           <div class="absolute bottom-4 right-4 flex gap-2">
-            <button
-              class="h-10 cursor-pointer rounded-lg bg-green-400 px-3 text-white hover:bg-green-500 transition-colors"
-              title="Visualizar producto"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="size-5"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12m8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 0 1 .67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 1 1-.671-1.34zM12 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </button>
+            
             <button
               class="h-10 cursor-pointer rounded-lg bg-violet-600 hover:bg-violet-700 px-3 text-white  transition-colors"
               title="Editar producto"
+              (click)="$event.stopPropagation()"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -103,30 +99,51 @@ import { FormularioComponent } from '../components/formulario.component';
                 />
               </svg>
             </button>
+            <button
+              class="h-10 cursor-pointer rounded-lg bg-red-600 hover:bg-red-700 px-2 text-white  transition-colors"
+              title="Eliminar producto"
+              (click)="$event.stopPropagation()"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="27"
+                height="27"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill="#ffffff"
+                  d="M9.808 17h1V8h-1zm3.384 0h1V8h-1zM6 20V6H5V5h4v-.77h6V5h4v1h-1v14z"
+                />
+              </svg>
+            </button>
           </div>
         </div>
+        }
       </div>
 
-      @if (mostrarFormularioRegistro()) {
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cerrarFormulario()">
-          <div class="relative max-w-2xl w-full mx-4" (click)="$event.stopPropagation()">
-            <app-formulario (cerrarFormulario)="cerrarFormulario()"></app-formulario>
-          </div>
-        </div>
-      }
-
-      
+      <app-formulario
+        [(mostrarModal)]="mostrarModal"
+        [acciones]="accionAsignada()"
+      ></app-formulario>
     </main>
   `,
 })
 export class ProductsPage {
-  public mostrarFormularioRegistro = signal<boolean>(false);
+  public serviceProductos = inject(ProductsService);
+  public accionAsignada = signal<Actions>('Registrar');
+  public mostrarModal = signal<boolean>(false);
 
-  mostrarFormulario() {
-    this.mostrarFormularioRegistro.set(true);
+  constructor() {
+    console.log(this.serviceProductos.productos);
   }
 
-  cerrarFormulario() {
-    this.mostrarFormularioRegistro.set(false);
+  mostrarFormulario() {
+    this.mostrarModal.set(true);
+    this.accionAsignada.set('Registrar');
+  }
+  visualizarFormulario() {
+    this.mostrarModal.set(true);
+    this.accionAsignada.set('Visualizar');
+
   }
 }

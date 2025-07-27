@@ -19,7 +19,7 @@ export const crearProductoValidator = [
     .withMessage('Unidad debe ser un número entero positivo'),
 
   body('categoria')
-    .isIn(['Laptos', 'CPU', 'Mouses', 'Teclados'])
+    .isIn(['Laptops', 'CPU', 'Mouses', 'Teclados'])
     .withMessage('Categoría inválida')
 ];
 
@@ -47,6 +47,6 @@ export const actualizarProductoValidator = [
 
   body('categoria')
     .optional()
-    .isIn(['LAPTOS', 'CPU', 'MOUSES', 'TECLADOS'])
+    .isIn(['Laptops', 'CPU', 'Mouses', 'Teclados'])
     .withMessage('Categoría inválida')
 ];

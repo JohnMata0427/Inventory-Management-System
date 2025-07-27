@@ -5,8 +5,9 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  FormControl,
 } from '@angular/forms';
-import { AuthService } from '../../../services/auth.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   imports: [RouterLink, ReactiveFormsModule],
@@ -33,6 +34,7 @@ import { AuthService } from '../../../services/auth.service';
             <div>
               <label class="block mb-1 text-sm">Correo electrónico</label>
               <div class="relative">
+               
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="22"
@@ -50,22 +52,22 @@ import { AuthService } from '../../../services/auth.service';
                   formControlName="email"
                   placeholder="ejemplo@correo.com"
                   class="w-full pl-12 pr-4 py-3 bg-[#2A2933] rounded-lg border border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 placeholder-gray-400 text-white"
-                  [class.border-red-500]="
-                    loginForm.get('email')?.invalid &&
-                    loginForm.get('email')?.touched
-                  "
+                 
                 />
               </div>
               <!-- Mensaje de error para email -->
-              @if (loginForm.get('email')?.invalid &&
+              @if (error().email && typeof error().email === 'string') {
+              <small class="text-red-600 block mt-1">{{ error().email }}</small>
+              } @else if (loginForm.get('email')?.hasError('required') &&
               loginForm.get('email')?.touched) {
-              <div class="text-red-400 text-xs mt-1">
-                @if (loginForm.get('email')?.errors?.['required']) {
-                <span>El email es obligatorio</span>
-                } @if (loginForm.get('email')?.errors?.['email']) {
-                <span>Formato de email inválido</span>
-                }
-              </div>
+              <small class="text-red-600 block mt-1"
+                >Este campo es obligatorio.</small
+              >
+              } @if (loginForm.get('email')?.hasError('email') &&
+              loginForm.get('email')?.touched) {
+              <small class="text-red-600 block mt-1"
+                >El formato del correo electrónico no es válido.</small
+              >
               }
             </div>
             <div>
@@ -90,34 +92,30 @@ import { AuthService } from '../../../services/auth.service';
                   formControlName="password"
                   placeholder="********"
                   class="w-full pl-12 pr-4 py-3 bg-[#2A2933] rounded-lg border border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 placeholder-gray-400 text-white"
-                  [class.border-red-500]="
-                    loginForm.get('password')?.invalid &&
-                    loginForm.get('password')?.touched
-                  "
+                  
                 />
               </div>
               <!-- Mensaje de error para password -->
-              @if (loginForm.get('password')?.invalid &&
+              @if (loginForm.get('password')?.hasError('required') &&
               loginForm.get('password')?.touched) {
-              <div class="text-red-400 text-xs mt-1">
-                @if (loginForm.get('password')?.errors?.['required']) {
-                <span>La contraseña es obligatoria</span>
-                }
-              </div>
+              <small class="text-red-600 block mt-1"
+                >Este campo es obligatorio.</small
+              >
               }
             </div>
-            <!-- Mostrar mensajes de error -->
-            @if (errorMessage()) {
-            <div class="text-red-600 text-sm">
-              {{ errorMessage() }}
-            </div>
+
+            @if (error().password && typeof error().password === 'string') {
+            <small class="text-red-600 block mt-1">{{
+              error().password
+            }}</small>
             }
+
             <button
               type="submit"
-              [disabled]="loginForm.invalid || isLoading()"
+              [disabled]="loginForm.invalid || carga()"
               class="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors py-3 rounded-lg font-semibold "
             >
-              {{ isLoading() ? 'Iniciando sesión...' : 'Entrar' }}
+              {{ carga() ? 'Iniciando sesión...' : 'Entrar' }}
             </button>
           </form>
 
@@ -130,70 +128,111 @@ import { AuthService } from '../../../services/auth.service';
         </div>
       </div>
     </main>
+
   `,
 })
-export class LoginPage implements OnInit {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
+export class LoginPage {
+  private serviceAuth = inject(AuthService);
   private router = inject(Router);
 
-  // Estado del componente usando signals
-  isLoading = signal<boolean>(false);
-  errorMessage = signal<string>('');
+  //modal
+  public mostrarModal = signal<boolean>(false);
+  public titulo = signal('');
+  public mensaje = signal('');
 
-  // Formulario reactivo con validaciones que coinciden con el backend
-  loginForm: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]], // Solo requerido para login
+  public passwordVisible = signal<boolean>(false);
+  //variable de carga
+  public carga = signal<boolean>(false);
+
+  public error = signal<any>({
+    email: '',
+    password: '',
   });
 
-  ngOnInit() {
-    // Escuchar cambios en el formulario para limpiar mensajes de error
-    this.loginForm.valueChanges.subscribe(() => {
-      // Limpiar el mensaje de error cuando el usuario escriba algo
-      if (this.errorMessage()) {
-        this.errorMessage.set('');
-      }
+  public loginForm = new FormGroup({
+    email: new FormControl('', [Validators.required, Validators.email]),
+    password: new FormControl('', [Validators.required]),
+  });
+
+  borrarError() {
+    this.error.set({
+      email: '',
+      password: '',
     });
   }
+  cerrarModal() {
+    this.mostrarModal.set(false);
+  }
 
-  // Método para manejar el envío del formulario
   onSubmit() {
     if (this.loginForm.valid) {
-      this.isLoading.set(true);
-      this.errorMessage.set('');
+      this.carga.set(true);
+      this.borrarError(); // Limpiar errores previos
 
-      const { email, password } = this.loginForm.value;
+      this.serviceAuth
+        .login(this.loginForm.value.email!, this.loginForm.value.password!)
+        .subscribe({
+          next: (response) => {
+            this.carga.set(false);
+            this.mostrarModal.set(true);
+            this.titulo.set('¡Éxito!');
+            this.mensaje.set('Inicio de sesión exitoso');
+            this.router.navigate(['/productos']);
+          },
+          error: ({ error }: { error: any }) => {
+            this.carga.set(false);
+            console.error('Error completo:', error);
 
-      this.authService.login(email, password).subscribe({
-        next: (response) => {
-          console.log('Login exitoso:', response);
-          this.isLoading.set(false);
-          // Redirigir a la página principal o dashboard
-          this.router.navigate(['/productos']); // Cambia por la ruta que necesites
-        },
-        error: (error) => {
-          console.error('Error en login:', error);
-          this.isLoading.set(false);
-
-          // Manejar diferentes tipos de errores
-          if (error.status === 401) {
-            this.errorMessage.set(
-              'Credenciales incorrectas. Verifica tu email y contraseña.'
-            );
-          } else if (error.status === 500) {
-            this.errorMessage.set('Error en el servidor. Inténtalo más tarde.');
-          } else {
-            this.errorMessage.set(
-              error.error?.message ||
-                'Error al iniciar sesión. Inténtalo de nuevo.'
-            );
-          }
-        },
-      });
+            // Manejar diferentes tipos de errores
+            if (
+              error.message &&
+              error.message.includes('Credenciales inválidas')
+            ) {
+              this.error.set({
+                email: '',
+                password:
+                  'Credenciales inválidas. Verifica tu email y contraseña.',
+              });
+            } else if (
+              error.message &&
+              error.message.includes('Usuario no encontrado')
+            ) {
+              this.error.set({
+                email: '',
+                password: 'No existe una cuenta con este email.',
+              });
+            } else {
+              // Error general del servidor
+              this.error.set({
+                email: '',
+                password: 'Error del servidor. Intenta nuevamente más tarde.',
+              });
+            }
+            setTimeout(() => {
+              this.borrarError();
+            }, 5000);
+          },
+        });
     } else {
-      // Marcar todos los campos como tocados para mostrar errores
-      this.loginForm.markAllAsTouched();
+      this.error.set({
+        email: this.loginForm.get('email')?.hasError('required')
+          ? 'Este campo es obligatorio.'
+          : '',
+        password: this.loginForm.get('password')?.hasError('required')
+          ? 'Este campo es obligatorio.'
+          : '',
+      });
+      this.carga.set(false);
+
+      // Marcar campos como touched para mostrar errores de validación
+      Object.keys(this.loginForm.controls).forEach((key) => {
+        this.loginForm.get(key)?.markAsTouched();
+      });
+
+      // Auto-limpiar después de 3 segundos
+      setTimeout(() => {
+        this.borrarError();
+      }, 3000);
     }
   }
 }

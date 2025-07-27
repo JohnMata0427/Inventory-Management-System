@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginPage } from './pages/login.page';
 import { RegisterPage } from './pages/register.page';
 import { ProductsPage } from './pages/products.page';
+import { DetalleProductoPage } from './pages/detalleProducto.page';
 
 export const routes: Routes = [
   {
@@ -12,6 +13,9 @@ export const routes: Routes = [
   },
   {
     path: 'productos', component: ProductsPage
+  },
+  {
+    path:'detalle-producto/:id', component: DetalleProductoPage
   },
   {
     path: '**', redirectTo: 'iniciar-sesion', pathMatch: 'full'
