@@ -1,20 +1,21 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import {
   Actions,
   FormularioComponent,
 } from '../components/formulario.component';
-import { ProductsService } from '../services/products.service';
-import { Router, RouterLink } from '@angular/router';
+import { ProductsService, type Producto } from '../services/products.service';
+import { RouterLink } from '@angular/router';
+import { ModalComponent } from '../components/modal.component';
 
 @Component({
-  imports: [FormularioComponent, RouterLink],
+  imports: [FormularioComponent, RouterLink, ModalComponent],
   template: `
     <div class="flex">
       <header class="min-h-screen w-96 flex  justify-center bg-[#23232a] p-6">
         <div class="flex flex-col items-center">
           <img class="h-8 mb-10" src="logo.png" alt="" />
           <svg
-          class="mb-4"
+            class="mb-4"
             xmlns="http://www.w3.org/2000/svg"
             width="80"
             height="80"
@@ -30,17 +31,10 @@ import { Router, RouterLink } from '@angular/router';
           <small class="text-white">jesenia.pazto#64agmail.com</small>
 
           <ul class="text-white">
-            <li>
-              Productos
-            </li>
-            <li>
-              Perfil
-            </li>
-            <li>
-              Salir
-            </li>
+            <li>Productos</li>
+            <li>Perfil</li>
+            <li>Salir</li>
           </ul>
-
         </div>
       </header>
       <main class="bg-[#1E1D24] text-white w-full  p-8">
@@ -67,9 +61,11 @@ import { Router, RouterLink } from '@angular/router';
               </g>
             </svg>
             <input
-              type="text"
+              #searchInput
+              type="search"
               placeholder="Buscar por nombre o código"
               class="w-full pl-12 pr-4 py-3 rounded-lg bg-[#2A2933] text-white focus:ring-2 focus:ring-violet-500 placeholder-gray-400"
+              (input)="search.set(searchInput.value)"
             />
           </div>
           <button
@@ -85,7 +81,7 @@ import { Router, RouterLink } from '@angular/router';
           @for(producto of serviceProductos.productos(); track $index) {
 
           <div
-            [routerLink]="['/detalle-producto']"
+            [routerLink]="['/detalle-producto', producto.id]"
             class=" bg-[#2a2933] rounded-xl p-4 hover:ring-2 hover:ring-violet-500 transition relative"
           >
             <img
@@ -107,7 +103,7 @@ import { Router, RouterLink } from '@angular/router';
               <button
                 class="h-10 cursor-pointer rounded-lg bg-violet-600 hover:bg-violet-700 px-3 text-white  transition-colors"
                 title="Editar producto"
-                (click)="$event.stopPropagation()"
+                (click)="actualizarProducto(producto); $event.stopPropagation()"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -126,7 +122,9 @@ import { Router, RouterLink } from '@angular/router';
               <button
                 class="h-10 cursor-pointer rounded-lg bg-red-600 hover:bg-red-700 px-2 text-white  transition-colors"
                 title="Eliminar producto"
-                (click)="$event.stopPropagation()"
+                (click)="
+                  solicitarEliminacion(producto.id); $event.stopPropagation()
+                "
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -142,13 +140,38 @@ import { Router, RouterLink } from '@angular/router';
               </button>
             </div>
           </div>
+          } @empty {
+          <div class="col-span-1 sm:col-span-2 lg:col-span-3 text-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="64"
+              height="64"
+              viewBox="0 0 24 24"
+              class="mx-auto mb-4 text-gray-400"
+            >
+              <path
+                fill="currentColor"
+                d="m4.425 4.04l.96.96h-.77q-.23 0-.423.192T4 5.616v9.769q0 .269.173.442t.443.173h10.353L1.777 2.808l.708-.708l18.684 18.685l-.707.707L15.969 17H13v2h2v1H9v-1h2v-2H4.616q-.691 0-1.153-.462T3 15.385v-9.77q0-.713.463-1.144t.962-.43m15.64 12.809l-.85-.85h.266q.192-.039.355-.192q.164-.154.164-.423v-9.77q0-.269-.173-.442T19.385 5H8.215l-1-1h12.17q.69 0 1.153.463T21 5.616v9.769q0 .496-.257.89t-.677.575m-10.37-6.123"
+              />
+            </svg>
+            <p class="text-gray-400">No se encontraron productos</p>
+          </div>
           }
         </div>
 
         <app-formulario
           [(mostrarModal)]="mostrarModal"
           [acciones]="accionAsignada()"
+          [datos]="datosParaActualizar()"
         ></app-formulario>
+
+        <app-modal
+          [(opened)]="mostrarConfirmacion"
+          type="delete"
+          title="Confirmar eliminación"
+          content="¿Estás seguro de que deseas eliminar este producto?"
+          (deleteItem)="eliminarProducto()"
+        />
       </main>
     </div>
   `,
@@ -158,16 +181,47 @@ export class ProductsPage {
   public accionAsignada = signal<Actions>('Registrar');
   public mostrarModal = signal<boolean>(false);
 
+  public search = signal<string>('');
+
+  // Para actualizar un producto, se necesita un objeto Producto con los datos a actualizar
+  public datosParaActualizar = signal<Producto>({} as Producto);
+
+  // Para eliminar un producto, se necesita el ID del producto a eliminar
+  public mostrarConfirmacion = signal<boolean>(false);
+  public idParaEliminar = signal<number>(0);
+
   constructor() {
-    console.log(this.serviceProductos.productos);
+    effect(() => {
+      const search = this.search();
+      const esCodigo = search.match(/^\d+$/);
+
+      let codigo = esCodigo ? search : '';
+      let nombre = esCodigo ? '' : search;
+
+      this.serviceProductos.obtenerProductos(nombre, codigo).subscribe();
+    });
   }
 
   mostrarFormulario() {
     this.mostrarModal.set(true);
     this.accionAsignada.set('Registrar');
   }
-  visualizarFormulario() {
+
+  actualizarProducto(producto: Producto) {
     this.mostrarModal.set(true);
-    this.accionAsignada.set('Visualizar');
+    this.accionAsignada.set('Actualizar');
+    this.datosParaActualizar.set(producto);
+  }
+
+  solicitarEliminacion(id: number) {
+    this.mostrarConfirmacion.set(true);
+    this.idParaEliminar.set(id);
+  }
+
+  eliminarProducto() {
+    const id = this.idParaEliminar();
+    if (id) {
+      this.serviceProductos.eliminarProducto(id).subscribe();
+    }
   }
 }
