@@ -1,13 +1,11 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ProductsService, type Producto } from '../services/products.service';
-import { httpResource } from '@angular/common/http';
-import { environment } from '../../env/environment';
-import { AuthService } from '../services/auth.service';
 import { NgClass, TitleCasePipe } from '@angular/common';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+import { ProductsService } from '../services/products.service';
 
 @Component({
-  imports: [RouterLink, NgClass, TitleCasePipe],
+  imports: [NgClass, TitleCasePipe, RouterLink],
   template: `
     <div class="flex h-screen">
       <header class="min-h-screen w-96 flex  justify-center bg-[#2a2933] p-6">
@@ -117,90 +115,22 @@ import { NgClass, TitleCasePipe } from '@angular/common';
           </ul>
         </div>
       </header>
-      <main class="bg-[#1E1D24] text-white min-h-screen w-full p-8">
-        <div class="">
-          <!-- Botón de regreso -->
-          <button
-            [routerLink]="['/productos']"
-            class="mb-6 bg-violet-600 hover:bg-violet-700 px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
-          >
-            ← Volver a productos
-          </button>
-
-          <!-- Contenido del producto -->
-          @if(productoResource.hasValue()) { @let datosProducto =
-          productoResource.value();
-
-          <div class="bg-[#2a2933] rounded-xl p-8">
-            <div class="grid md:grid-cols-2 gap-8">
-              <!-- Imagen del producto -->
-              <div>
-                <img
-                  [src]="datosProducto.imagen"
-                  [alt]="datosProducto.nombre"
-                  class="w-full h-96 object-cover rounded-lg"
-                />
-              </div>
-
-              <!-- Información del producto -->
-              <div>
-                <h1 class="text-4xl font-bold mb-4">
-                  {{ datosProducto.nombre }}
-                </h1>
-                <div class="space-y-3">
-                  <p class="text-gray-300">
-                    <span class="font-semibold"
-                      ><span class="font-bold">Código:</span></span
-                    >
-                    {{ datosProducto.codigo }}
-                  </p>
-                  <p class="text-gray-300">
-                    <span class="font-semibold"><span class="font-bold"> Categoría: </span></span>
-                    {{ datosProducto.categoria }}
-                  </p>
-                  <p class="text-gray-300">
-                    <span class="font-semibold"><span class="font-bold">
-                      Unidad:
-                    </span></span>
-                    {{ datosProducto.unidad }}
-                  </p>
-                  @if(datosProducto.descripcion) {
-                  <p class="text-gray-300">
-                    <span class="font-bold">Descripción:</span>
-                    {{ datosProducto.descripcion }}
-                  </p>
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-          } @else {
-          <div class="text-center">
-            <p class="text-xl">Producto no encontrado</p>
-          </div>
-          }
-        </div>
-      </main>
+      <main class="bg-[#1E1D24] text-white w-full  p-8"></main>
     </div>
   `,
 })
-export class DetalleProductoPage {
+export class InicioPage {
   public serviceAuth = inject(AuthService);
   public servicioRuta = inject(ActivatedRoute);
   public rutaActiva = computed(() => this.servicioRuta.snapshot.url[0]?.path);
   public router = inject(Router);
-  public id = input.required<number>();
-  public productoResource = httpResource<Producto>(() => ({
-    url: `${environment.urlApi}/productos/${this.id()}`,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
-  }));
+
   constructor() {
+    
     if (!this.serviceAuth.clienteAutenticado()) {
       this.serviceAuth.obtenerPerfil().subscribe();
     }
+    
   }
   cerrarSesion() {
     this.serviceAuth.logout();
