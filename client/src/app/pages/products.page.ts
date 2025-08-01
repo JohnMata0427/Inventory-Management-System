@@ -5,9 +5,11 @@ import {
 } from '../components/formulario.component';
 import { ProductsService } from '../services/products.service';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+import { TitleCasePipe } from '@angular/common';
 
 @Component({
-  imports: [FormularioComponent, RouterLink],
+  imports: [FormularioComponent, RouterLink, TitleCasePipe],
   template: `
     <div class="flex">
       <header class="min-h-screen w-96 flex  justify-center bg-[#23232a] p-6">
@@ -26,8 +28,8 @@ import { Router, RouterLink } from '@angular/router';
             />
           </svg>
 
-          <span class="text-white">Jesenia Isabel</span>
-          <small class="text-white">jesenia.pazto#64agmail.com</small>
+          <span class="text-white">{{ serviceAuth.datosUsuario().nombre | titlecase }}</span>
+          <small class="text-white">{{serviceAuth.datosUsuario().email}}</small>
 
           <ul class="text-white">
             <li>
@@ -94,9 +96,9 @@ import { Router, RouterLink } from '@angular/router';
               class="rounded-lg mb-4 h-60 w-full object-cover"
             />
             <div class="text-gray-300 text-sm mb-1">
-              Categoría: {{ producto.categoria }}
+              {{ producto.categoria | titlecase}}
             </div>
-            <h2 class="text-2xl font-bold">{{ producto.nombre }}</h2>
+            <h2 class="text-2xl font-bold">{{ producto.nombre | titlecase }}</h2>
             <p class="text-sm text-gray-400">Código: {{ producto.codigo }}</p>
             <p class="text-sm text-gray-400 mb-4">
               Unidad: {{ producto.unidad }}
@@ -157,9 +159,15 @@ export class ProductsPage {
   public serviceProductos = inject(ProductsService);
   public accionAsignada = signal<Actions>('Registrar');
   public mostrarModal = signal<boolean>(false);
+  public serviceAuth = inject(AuthService)
+  public router = inject(Router)
 
   constructor() {
     console.log(this.serviceProductos.productos);
+    if (!this.serviceAuth.clienteAutenticado()) {
+      this.serviceAuth.obtenerPerfil().subscribe();
+    }
+    console.log('Cliente', this.serviceAuth.clienteAutenticado())
   }
 
   mostrarFormulario() {
@@ -169,5 +177,10 @@ export class ProductsPage {
   visualizarFormulario() {
     this.mostrarModal.set(true);
     this.accionAsignada.set('Visualizar');
+  }
+  
+  cerrarSesion() {
+    this.serviceAuth.logout();
+    this.router.navigate(['/iniciar-sesion']);
   }
 }

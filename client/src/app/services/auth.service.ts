@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../env/environment';
@@ -80,12 +80,33 @@ export class AuthService {
 
   // Obtener perfil del usuario autenticado
   obtenerPerfil() {
-    return this.http.get<perfilUsuario>(`${this.urlBackend}/auth/perfil`).pipe(
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      return new Observable(observer => {
+        observer.error('No hay token');
+      });
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    return this.http.get<perfilUsuario>(`${this.urlBackend}/auth/perfil`, { headers }).pipe(
       tap((perfil) => {
         this.datosUsuario.set(perfil);
         this.clienteAutenticado.set(true);
       })
     );
+  }
+  logout() {
+    localStorage.removeItem('token');
+    this.clienteAutenticado.set(false);
+    this.datosUsuario.set({
+      id: 0,
+      nombre: '',
+      email: '',
+    });
   }
 
 }
