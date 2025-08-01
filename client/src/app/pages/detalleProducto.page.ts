@@ -1,6 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ProductsService } from '../services/products.service';
+import { ProductsService, type Producto } from '../services/products.service';
+import { httpResource } from '@angular/common/http';
+import { environment } from '../../env/environment';
 
 @Component({
   imports: [RouterLink],
@@ -29,38 +31,42 @@ import { ProductsService } from '../services/products.service';
         </button>
 
         <!-- Contenido del producto -->
-        @if(producto) {
+        @if(productoResource.hasValue()) { @let datosProducto =
+        productoResource.value();
+
         <div class="bg-[#2a2933] rounded-xl p-8">
           <div class="grid md:grid-cols-2 gap-8">
             <!-- Imagen del producto -->
             <div>
               <img
-                [src]="producto.imagen"
-                [alt]="producto.nombre"
+                [src]="datosProducto.imagen"
+                [alt]="datosProducto.nombre"
                 class="w-full h-96 object-cover rounded-lg"
               />
             </div>
 
             <!-- Información del producto -->
             <div>
-              <h1 class="text-3xl font-bold mb-4">{{ producto.nombre }}</h1>
+              <h1 class="text-3xl font-bold mb-4">
+                {{ datosProducto.nombre }}
+              </h1>
               <div class="space-y-3">
                 <p class="text-gray-300">
                   <span class="font-semibold">Código:</span>
-                  {{ producto.codigo }}
+                  {{ datosProducto.codigo }}
                 </p>
                 <p class="text-gray-300">
                   <span class="font-semibold">Categoría:</span>
-                  {{ producto.categoria }}
+                  {{ datosProducto.categoria }}
                 </p>
                 <p class="text-gray-300">
                   <span class="font-semibold">Unidad:</span>
-                  {{ producto.unidad }}
+                  {{ datosProducto.unidad }}
                 </p>
-                @if(producto.descripcion) {
+                @if(datosProducto.descripcion) {
                 <p class="text-gray-300">
                   <span class="font-semibold">Descripción:</span>
-                  {{ producto.descripcion }}
+                  {{ datosProducto.descripcion }}
                 </p>
                 }
               </div>
@@ -77,20 +83,12 @@ import { ProductsService } from '../services/products.service';
   `,
 })
 export class DetalleProductoPage {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private productsService = inject(ProductsService);
-
-  public producto: any = null;
-
-  constructor() {
-    const id = this.route.snapshot.params['id'];
-    this.producto = this.productsService.productos().find((p) => p.id === id);
-
-    if (!this.producto) {
-      console.log('Producto no encontrado');
-      // Opcional: redirigir de vuelta a productos si no se encuentra
-      // this.router.navigate(['/productos']);
-    }
-  }
+  public id = input.required<number>();
+  public productoResource = httpResource<Producto>(() => ({
+    url: `${environment.urlApi}/productos/${this.id()}`,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
+  }));
 }

@@ -11,11 +11,17 @@ import {
   signal,
   inject,
 } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ProductsService } from '../services/products.service';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { Producto, ProductsService } from '../services/products.service';
+import { ModalComponent } from './modal.component';
 export type Actions = 'Registrar' | 'Actualizar' | 'Visualizar';
 @Component({
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ModalComponent],
   selector: 'app-formulario',
   template: `
     <!-- Formulario Registro/Actualización -->
@@ -52,7 +58,11 @@ export type Actions = 'Registrar' | 'Actualizar' | 'Visualizar';
           </svg>
         </button>
       </div>
-      <form class="space-y-5 text-white px-7" [formGroup]="formProducto" (ngSubmit)="onSubmit()">
+      <form
+        class="space-y-5 text-white px-7"
+        [formGroup]="formProducto"
+        (ngSubmit)="onSubmit()"
+      >
         <label>
           @let imagenInvalida = (formProducto.get('imagen')?.invalid &&
           formProducto.get('imagen')?.value) || errores().imagen;
@@ -146,9 +156,7 @@ export type Actions = 'Registrar' | 'Actualizar' | 'Visualizar';
         </small>
         } @else if (codigoInvalido) {
         <small class="text-red-600">
-          <div class="w-[215px]">
-            El código es requerido.
-          </div>
+          <div class="w-[215px]">El código es requerido.</div>
         </small>
         }
         <div>
@@ -179,7 +187,13 @@ export type Actions = 'Registrar' | 'Actualizar' | 'Visualizar';
         }
         <div>
           <label class="block text-sm mb-1">Unidad (1-100)</label>
-          <input type="range" min="1" max="100" class="w-full" formControlName="unidad"/>
+          <input
+            type="range"
+            min="1"
+            max="100"
+            class="w-full"
+            formControlName="unidad"
+          />
         </div>
         <div>
           @let categoriaInvalida = (formProducto.get('categoria')?.invalid &&
@@ -212,10 +226,28 @@ export type Actions = 'Registrar' | 'Actualizar' | 'Visualizar';
         <button
           class="w-full bg-violet-600 hover:bg-violet-700 py-3 rounded-lg font-semibold"
         >
-          Guardar Producto
+          @if (loading()) {
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="128"
+            height="128"
+            viewBox="0 0 16 16"
+            class="animate-spin size-5 m-auto"
+          >
+            <path
+              fill="currentColor"
+              d="M8 0A8 8 0 0 0 .002 7.812C.094 4.033 2.968 1 6.5 1C10.09 1 13 4.134 13 8a1.5 1.5 0 0 0 3 0a8 8 0 0 0-8-8m0 16a8 8 0 0 0 7.998-7.812C15.906 11.967 13.032 15 9.5 15C5.91 15 3 11.866 3 8a1.5 1.5 0 0 0-3 0a8 8 0 0 0 8 8"
+            />
+          </svg>
+          } @else { Guardar Producto }
         </button>
       </form>
     </dialog>
+    <app-modal
+      [(opened)]="mostrarAviso"
+      [title]="tituloAviso()"
+      [content]="contenidoAviso()"
+    />
   `,
 })
 export class FormularioComponent {
@@ -224,8 +256,19 @@ export class FormularioComponent {
   public modal = viewChild<ElementRef<HTMLDialogElement>>('modal');
   public imagePreview: string | ArrayBuffer | null = null;
   public serviceProductos = inject(ProductsService);
+  public loading = signal<boolean>(false);
+
+  // Cuando se quiere actualizar un registro
+  public datos = input<Producto>();
+
+  // Modal Avisos
+  public mostrarAviso = signal<boolean>(false);
+  public tituloAviso = signal<string>('');
+  public contenidoAviso = signal<string>('');
 
   constructor() {
+    // Los effect se ejecutan cada vez que cambia el valor de las señales
+
     effect(() => {
       if (this.mostrarModal()) {
         this.modal()?.nativeElement.showModal();
@@ -233,7 +276,26 @@ export class FormularioComponent {
         this.modal()?.nativeElement.close();
       }
     });
+
+    effect(() => {
+      if (!this.mostrarAviso() && this.tituloAviso() === 'Éxito') {
+        this.formProducto.reset();
+        this.imagePreview = null;
+
+        this.mostrarModal.set(false);
+      }
+    });
+
+    effect(() => {
+      const datos = this.datos();
+
+      if (datos) {
+        this.formProducto.patchValue(datos);
+        this.imagePreview = datos.imagen;
+      }
+    });
   }
+
   public formProducto = new FormGroup({
     nombre: new FormControl('', [
       Validators.required,
@@ -241,9 +303,7 @@ export class FormularioComponent {
       Validators.maxLength(50),
       Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/), // Solo letras y espacios
     ]),
-    codigo: new FormControl('', [
-      Validators.required,
-    ]),
+    codigo: new FormControl('', [Validators.required]),
     descripcion: new FormControl('', [
       Validators.required,
       Validators.minLength(10),
@@ -257,6 +317,7 @@ export class FormularioComponent {
     categoria: new FormControl('', [Validators.required]),
     imagen: new FormControl('', [Validators.required]),
   });
+
   public errores = signal<any>({
     nombre: '',
     codigo: '',
@@ -265,9 +326,11 @@ export class FormularioComponent {
     categoria: '',
     imagen: '',
   });
+
   borrarError(campo: string) {
     this.errores.update((prev) => ({ ...prev, [campo]: '' })); //setea los errores
   }
+
   public onFileChange(event: any) {
     if (event.target.files && event.target.files.length) {
       const [file] = event.target.files;
@@ -292,21 +355,53 @@ export class FormularioComponent {
       }
     });
     return formData;
-
   }
+
   onSubmit() {
     const formData = this.toFormData();
-    if(this.acciones()==='Registrar'){
-      this.serviceProductos.crearProductos(formData).subscribe({
-        next: (producto) => {
-          console.log('Producto creado:', producto);
-          this.mostrarModal.set(false);
-        },
-        error: (error) => {
-          console.error('Error al crear producto:', error);
-        }
-      });
-    }
+    this.loading.set(true);
 
+    if (this.acciones() === 'Registrar') {
+      this.serviceProductos
+        .crearProductos(formData)
+        .subscribe({
+          next: () => {
+            this.tituloAviso.set('Éxito');
+            this.contenidoAviso.set('Producto creado correctamente.');
+          },
+          error: this.controlarErrores,
+        })
+        .add(this.alFinalizar);
+        
+    } else if (this.acciones() === 'Actualizar') {
+      this.serviceProductos
+        .actualizarProducto(formData, this.datos()!.id)
+        .subscribe({
+          next: () => {
+            this.tituloAviso.set('Éxito');
+            this.contenidoAviso.set('Producto actualizado correctamente.');
+          },
+          error: this.controlarErrores,
+        })
+        .add(this.alFinalizar);
+    }
   }
+
+  private alFinalizar = () => {
+    this.mostrarAviso.set(true);
+    this.loading.set(false);
+  };
+
+  private controlarErrores = ({ error }: any) => {
+    const { errors = [] } = error;
+
+    this.tituloAviso.set('Error');
+    console.log(error);
+
+    this.contenidoAviso.set(
+      errors.length > 0
+        ? 'Complete todos los campos correctamente.'
+        : 'Error al crear el producto. Por favor, inténtelo de nuevo.'
+    );
+  };
 }

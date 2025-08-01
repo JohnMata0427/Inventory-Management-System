@@ -68,16 +68,9 @@ export class ProductsService {
         })
       );
   }
-  obtenerProductoId(id: number) {
-    return this.http.get<Producto>(`${this.urlBackend}/productos/${id}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
-  }
-  actualizarProducto(id: number) {
+  actualizarProducto(datos: FormData, id: number) {
     return this.http
-      .put<Producto>(`${this.urlBackend}/productos/${id}`, {
+      .put<Producto>(`${this.urlBackend}/productos/${id}`, datos, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
