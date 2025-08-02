@@ -115,7 +115,43 @@ import { ProductsService } from '../services/products.service';
           </ul>
         </div>
       </header>
-      <main class="bg-[#1E1D24] text-white w-full  p-8"></main>
+      <main class="bg-[#302f38] text-white w-full  p-10">
+        <h1 class="text-[60px] font-bold pl-10">
+          ✨Bienvenida,
+          <strong
+            class=" text-[60px] font-extrabold bg-gradient-to-r from-[#6c08de] via-[#6018b1] to-gray-400 bg-clip-text text-transparent animate-gradient"
+          >
+            ISABEL
+          </strong>
+        </h1>
+        <div class="grid grid-cols-2">
+          <div>
+            <div class="flex flex-col mt-30 pl-20 text-[19px] gap-6">
+              <p class="w-2xs ">
+                Estás en el panel de administración de
+                <span class="font-bold text-[25px]">TechStore.</span>
+              </p>
+              <p class="w-3xs">
+                Aquí puedes gestionar y supervisar todos los equipos
+                tecnológicos registrados.
+              </p>
+            </div>
+            <button>
+              <a
+                class="flex font-semibold w-[180px] justify-center items-center  rounded-2xl py-3 transition-colors duration-initial hover:bg-[#594686e8] bg-[#6c08de]  text-white mt-10 ml-20"
+                routerLink="/productos"
+                
+              >
+                
+                Productos
+              </a>
+            </button>
+          </div>
+          <div>
+            <img class="" src="admin.png" alt="" />
+          </div>
+        </div>
+      </main>
     </div>
   `,
 })
@@ -126,11 +162,9 @@ export class InicioPage {
   public router = inject(Router);
 
   constructor() {
-    
     if (!this.serviceAuth.clienteAutenticado()) {
       this.serviceAuth.obtenerPerfil().subscribe();
     }
-    
   }
   cerrarSesion() {
     this.serviceAuth.logout();
