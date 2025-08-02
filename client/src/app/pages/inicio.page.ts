@@ -115,40 +115,45 @@ import { ProductsService } from '../services/products.service';
           </ul>
         </div>
       </header>
-      <main class="bg-[#302f38] text-white w-full  p-10">
+      <main
+        class="w-full text-white p-10 bg-gradient-to-br from-[#1f1e26] via-[#302f38] to-[#4e3d6b]"
+      >
         <h1 class="text-[60px] font-bold pl-10">
           ✨Bienvenida,
           <strong
-            class=" text-[60px] font-extrabold bg-gradient-to-r from-[#6c08de] via-[#6018b1] to-gray-400 bg-clip-text text-transparent animate-gradient"
+            class="text-[60px] font-extrabold bg-gradient-to-r from-[#6c08de] via-[#6018b1] to-[#999999] bg-clip-text text-transparent animate-gradient"
           >
             ISABEL
           </strong>
         </h1>
-        <div class="grid grid-cols-2">
-          <div>
-            <div class="flex flex-col mt-30 pl-20 text-[19px] gap-6">
-              <p class="w-2xs ">
+
+        <div class="grid grid-cols-2 ">
+          <div class="mt-30">
+            <div class="flex flex-col pl-20 text-[19px] gap-6">
+              <p class="max-w-xs text-gray-300">
                 Estás en el panel de administración de
-                <span class="font-bold text-[25px]">TechStore.</span>
+                <span class="font-bold text-[25px] text-[#a08cf5]"
+                  >TechStore.</span
+                >
               </p>
-              <p class="w-3xs">
+              <p class="max-w-sm text-gray-400">
                 Aquí puedes gestionar y supervisar todos los equipos
                 tecnológicos registrados.
               </p>
             </div>
+
             <button>
               <a
-                class="flex font-semibold w-[180px] justify-center items-center  rounded-2xl py-3 transition-colors duration-initial hover:bg-[#594686e8] bg-[#6c08de]  text-white mt-10 ml-20"
+                class="flex font-semibold w-[180px] justify-center items-center rounded-2xl py-3 mt-10 ml-20 transition-all duration-300 hover:bg-[#594686e8] bg-[#6c08de] text-white"
                 routerLink="/productos"
-                
               >
-                
                 Productos
               </a>
             </button>
           </div>
-          <div>
-            <img class="" src="admin.png" alt="" />
+
+          <div class="flex justify-center items-center">
+            <img class="" src="admin.png" alt="Avatar Admin" />
           </div>
         </div>
       </main>
