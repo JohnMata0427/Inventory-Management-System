@@ -7,11 +7,15 @@ import productoRoutes from "./routes/producto_routes.js";
 
 const app = express();
 
+const { PORT = 3001 } = process.env;
+
+app.set("port", PORT);
+
 app.use(cors());
 app.use(express.json());
 
 app.get("/", (_, res) => {
-  res.status(200).json({ msg: "El servidor está funcionando correctamente 🚀" });
+  res.status(200).json({ msg: `El servidor está funcionando correctamente 🚀` });
 });
 
 app.get("/health", (_, res) => {
